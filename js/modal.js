@@ -48,6 +48,10 @@ async function openModal(pokemon) {
         const pokemonData = await getPokemonDetails(pokemon.id);
         const formattedData = formatPokemonData(pokemonData);
         
+        // Buscar melhores movimentos
+        const bestMoves = await getBestMoves(pokemonData.moves, 4);
+        formattedData.bestMoves = bestMoves;
+        
         // Renderizar conteúdo do modal
         renderModalContent(formattedData);
     } catch (error) {
@@ -96,6 +100,39 @@ function renderModalContent(pokemon) {
         `<span class="ability-badge">${ability.replace('-', ' ')}</span>`
     ).join('');
     
+    // Renderizar melhores ataques
+    let movesHTML = '';
+    if (pokemon.bestMoves && pokemon.bestMoves.length > 0) {
+        movesHTML = pokemon.bestMoves.map(move => `
+            <div class="move-card">
+                <div class="move-header">
+                    <span class="move-name">${move.namePt}</span>
+                    <span class="pokemon-type type-${move.type}">${TYPE_TRANSLATIONS[move.type] || move.type}</span>
+                </div>
+                <div class="move-stats">
+                    <div class="move-stat">
+                        <span class="move-stat-label">Poder</span>
+                        <span class="move-stat-value">${move.power}</span>
+                    </div>
+                    <div class="move-stat">
+                        <span class="move-stat-label">Precisão</span>
+                        <span class="move-stat-value">${move.accuracy || '-'}%</span>
+                    </div>
+                    <div class="move-stat">
+                        <span class="move-stat-label">PP</span>
+                        <span class="move-stat-value">${move.pp}</span>
+                    </div>
+                </div>
+                <div class="move-class">
+                    <i class="fas ${move.damageClass === 'physical' ? 'fa-fist-raised' : move.damageClass === 'special' ? 'fa-magic' : 'fa-shield-alt'}"></i>
+                    ${move.damageClass === 'physical' ? 'Físico' : move.damageClass === 'special' ? 'Especial' : 'Status'}
+                </div>
+            </div>
+        `).join('');
+    } else {
+        movesHTML = '<p class="no-moves">Carregando ataques...</p>';
+    }
+    
     modalBody.innerHTML = `
         <div class="modal-header">
             <div class="modal-pokemon-number">${pokemon.number}</div>
@@ -139,6 +176,16 @@ function renderModalContent(pokemon) {
                 <h3 class="modal-section-title">Habilidades</h3>
                 <div class="modal-abilities">
                     ${abilitiesHTML}
+                </div>
+            </div>
+            
+            <!-- Melhores Ataques -->
+            <div class="modal-section">
+                <h3 class="modal-section-title">
+                    <i class="fas fa-bolt"></i> Melhores Ataques
+                </h3>
+                <div class="modal-moves">
+                    ${movesHTML}
                 </div>
             </div>
         </div>
